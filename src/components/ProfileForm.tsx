@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,9 +46,10 @@ type ProfileData = {
 
 interface ProfileFormProps {
   onSubmit: (data: ProfileData) => void;
+  initialData?: ProfileData;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
+const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit, initialData }) => {
   const [formData, setFormData] = useState<ProfileData>({
     name: '',
     dateOfBirth: undefined,
@@ -74,6 +74,18 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
 
   const [activeTab, setActiveTab] = useState('personal');
 
+  useEffect(() => {
+    if (initialData) {
+      let updatedData = {...initialData};
+      
+      if (typeof initialData.dateOfBirth === 'string') {
+        updatedData.dateOfBirth = new Date(initialData.dateOfBirth);
+      }
+      
+      setFormData(updatedData);
+    }
+  }, [initialData]);
+
   const handleChange = (field: keyof ProfileData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -85,7 +97,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
     if (!formData.name || !formData.dateOfBirth || !formData.gender || !formData.category) {
       toast.error("Please complete all required personal details");
       setActiveTab('personal');
@@ -111,7 +122,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Your Scholarship Profile</CardTitle>
+        <CardTitle className="text-2xl text-center">
+          {initialData ? "Update Your Scholarship Profile" : "Your Scholarship Profile"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -123,7 +136,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
               <TabsTrigger value="location">Location</TabsTrigger>
             </TabsList>
             
-            {/* Personal Details Tab */}
             <TabsContent value="personal" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -224,7 +236,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
               </div>
             </TabsContent>
             
-            {/* Academic Details Tab */}
             <TabsContent value="academic" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -310,7 +321,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
               </div>
             </TabsContent>
             
-            {/* Financial Details Tab */}
             <TabsContent value="financial" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -380,7 +390,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
               </div>
             </TabsContent>
             
-            {/* Location Tab */}
             <TabsContent value="location" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">

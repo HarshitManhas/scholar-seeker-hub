@@ -1,28 +1,64 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import ProfileForm from '@/components/ProfileForm';
 import ScholarshipList from '@/components/ScholarshipList';
 import Dashboard from '@/components/Dashboard';
 import { mockScholarships } from '@/data/mockScholarships';
 import { ScholarshipProps } from '@/components/ScholarshipCard';
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap, LogIn } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import LoginForm from '@/components/LoginForm';
+import RegisterForm from '@/components/RegisterForm';
+import { toast } from 'sonner';
 
 const Index = () => {
+  const { isAuthenticated, user, updateProfile, hasProfile } = useAuth();
   const [showResults, setShowResults] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [filteredScholarships, setFilteredScholarships] = useState<ScholarshipProps[]>([]);
   const [bookmarkedScholarships, setBookmarkedScholarships] = useState<ScholarshipProps[]>([]);
   const [appliedScholarships, setAppliedScholarships] = useState<ScholarshipProps[]>([]);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [isLoginView, setIsLoginView] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (hasProfile && user.profile) {
+        handleProfileSubmit(user.profile);
+      }
+      
+      const savedBookmarks = localStorage.getItem(`bookmarks_${user.email}`);
+      const savedApplied = localStorage.getItem(`applied_${user.email}`);
+      
+      if (savedBookmarks) {
+        try {
+          setBookmarkedScholarships(JSON.parse(savedBookmarks));
+        } catch (e) {
+          console.error("Error loading bookmarks:", e);
+        }
+      }
+      
+      if (savedApplied) {
+        try {
+          setAppliedScholarships(JSON.parse(savedApplied));
+        } catch (e) {
+          console.error("Error loading applied scholarships:", e);
+        }
+      }
+    }
+  }, [isAuthenticated, user, hasProfile]);
 
   const handleProfileSubmit = (profileData: any) => {
     console.log("Profile data submitted:", profileData);
     
-    // In a real application, you would use this data to filter scholarships from the database
-    // For now, we'll simulate filtering with our mock data
+    if (isAuthenticated) {
+      updateProfile(profileData);
+    }
+    
     let filtered = [...mockScholarships];
     
-    // Filter by academic level
     if (profileData.educationLevel) {
       if (profileData.educationLevel === 'secondary' || profileData.educationLevel === 'senior_secondary') {
         filtered = filtered.filter(s => 
@@ -39,7 +75,6 @@ const Index = () => {
       }
     }
     
-    // Filter by course/field of study
     if (profileData.course) {
       if (profileData.course === 'science' || profileData.course === 'engineering') {
         filtered = filtered.filter(s => 
@@ -73,21 +108,18 @@ const Index = () => {
       }
     }
     
-    // Financial need filtering
     if (profileData.familyIncome === 'below_1lakh' || profileData.familyIncome === '1_3lakh') {
       filtered = filtered.filter(s => 
         s.eligibility.some(e => e.includes('Financial Need'))
       );
     }
     
-    // Gender filtering
     if (profileData.gender === 'female') {
       filtered = filtered.filter(s => 
         s.eligibility.some(e => e.includes('Female')) || s.title.includes('Women')
       );
     }
     
-    // Category filtering (SC/ST/OBC)
     if (profileData.category === 'sc' || profileData.category === 'st') {
       filtered = filtered.filter(s => 
         s.eligibility.some(e => 
@@ -101,7 +133,6 @@ const Index = () => {
       );
     }
     
-    // Special categories
     if (profileData.isDisabled) {
       const disabilityScholarships = mockScholarships.filter(s => 
         s.eligibility.some(e => 
@@ -120,7 +151,6 @@ const Index = () => {
       }
     }
     
-    // Orphan or single parent scholarships
     if (profileData.isOrphan || profileData.hasSingleParent) {
       const specialCaseScholarships = mockScholarships.filter(s => 
         s.eligibility.some(e => 
@@ -138,7 +168,6 @@ const Index = () => {
       }
     }
     
-    // State-specific scholarships
     if (profileData.state) {
       const stateScholarships = mockScholarships.filter(s => 
         s.eligibility.some(e => e.includes(profileData.state.replace('_', ' ')))
@@ -163,10 +192,18 @@ const Index = () => {
       .find(s => s.id === id);
     
     if (scholarship) {
+      let newBookmarks;
+      
       if (bookmarkedScholarships.some(s => s.id === id)) {
-        setBookmarkedScholarships(prev => prev.filter(s => s.id !== id));
+        newBookmarks = bookmarkedScholarships.filter(s => s.id !== id);
+        setBookmarkedScholarships(newBookmarks);
       } else {
-        setBookmarkedScholarships(prev => [...prev, scholarship]);
+        newBookmarks = [...bookmarkedScholarships, scholarship];
+        setBookmarkedScholarships(newBookmarks);
+      }
+      
+      if (isAuthenticated && user) {
+        localStorage.setItem(`bookmarks_${user.email}`, JSON.stringify(newBookmarks));
       }
     }
   };
@@ -176,9 +213,66 @@ const Index = () => {
       .find(s => s.id === id);
     
     if (scholarship && !appliedScholarships.some(s => s.id === id)) {
-      setAppliedScholarships(prev => [...prev, scholarship]);
+      const newApplied = [...appliedScholarships, scholarship];
+      setAppliedScholarships(newApplied);
+      
+      if (isAuthenticated && user) {
+        localStorage.setItem(`applied_${user.email}`, JSON.stringify(newApplied));
+      }
     }
   };
+
+  const handleAuthSuccess = () => {
+    setAuthDialogOpen(false);
+    toast.success("Welcome! Please complete your scholarship profile.");
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <main className="container mx-auto px-4 py-16">
+          <div className="flex flex-col items-center justify-center text-center max-w-3xl mx-auto gap-8">
+            <div className="inline-flex items-center justify-center p-6 bg-primary/10 rounded-full">
+              <GraduationCap className="h-16 w-16 text-primary" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold">Find Scholarships That Match Your Profile</h1>
+            <p className="text-xl text-muted-foreground">
+              Log in to discover scholarships tailored to your academic profile, financial needs, and personal background.
+            </p>
+            <Button 
+              size="lg" 
+              className="mt-4 text-lg"
+              onClick={() => setAuthDialogOpen(true)}
+            >
+              <LogIn className="mr-2 h-5 w-5" />
+              Sign In to Continue
+            </Button>
+          </div>
+        </main>
+        
+        <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            {isLoginView ? (
+              <LoginForm 
+                onSuccess={handleAuthSuccess}
+                onRegisterClick={() => setIsLoginView(false)}
+              />
+            ) : (
+              <RegisterForm 
+                onSuccess={() => {
+                  setAuthDialogOpen(false);
+                  setIsLoginView(true);
+                }}
+                onLoginClick={() => setIsLoginView(true)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -206,7 +300,10 @@ const Index = () => {
               </div>
             </div>
             
-            <ProfileForm onSubmit={handleProfileSubmit} />
+            <ProfileForm 
+              onSubmit={handleProfileSubmit} 
+              initialData={user?.profile} 
+            />
           </>
         ) : showDashboard ? (
           <Dashboard 

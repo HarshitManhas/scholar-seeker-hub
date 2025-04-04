@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -22,6 +23,8 @@ interface LoginFormProps {
 }
 
 const LoginForm = ({ onSuccess, onRegisterClick }: LoginFormProps) => {
+  const { login } = useAuth();
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -36,11 +39,11 @@ const LoginForm = ({ onSuccess, onRegisterClick }: LoginFormProps) => {
       console.log("Login attempt with:", data);
       // Simulate successful login (replace with actual API call)
       setTimeout(() => {
-        // Store some user info in localStorage
-        localStorage.setItem('user', JSON.stringify({ 
+        // Create user object and login
+        login({ 
           email: data.email,
           isLoggedIn: true,
-        }));
+        });
         
         toast.success("Successfully logged in!");
         

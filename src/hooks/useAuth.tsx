@@ -1,9 +1,41 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 
+interface ProfileData {
+  // Personal Details
+  name: string;
+  dateOfBirth: string | undefined;
+  gender: string;
+  category: string;
+  email: string;
+  phone: string;
+  
+  // Academic Details
+  educationLevel: string;
+  course: string;
+  board: string;
+  yearOfStudy: string;
+  marks: string;
+  
+  // Financial Details
+  familyIncome: string;
+  parentsOccupation: string;
+  
+  // Location
+  state: string;
+  district: string;
+  pincode: string;
+  
+  // Special Categories
+  isDisabled: boolean;
+  isOrphan: boolean;
+  hasSingleParent: boolean;
+}
+
 interface User {
   email: string;
   isLoggedIn: boolean;
+  profile?: ProfileData;
 }
 
 interface AuthContextType {
@@ -11,6 +43,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (userData: User) => void;
   logout: () => void;
+  updateProfile: (profileData: ProfileData) => void;
+  hasProfile: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,13 +76,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('user');
   };
 
+  const updateProfile = (profileData: ProfileData) => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        profile: profileData
+      };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
+        hasProfile: !!(user?.profile),
         login,
         logout,
+        updateProfile,
       }}
     >
       {children}
