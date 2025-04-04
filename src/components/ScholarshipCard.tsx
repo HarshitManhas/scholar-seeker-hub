@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, DollarSign, ExternalLink, Heart } from 'lucide-react';
+import { CalendarIcon, DollarSign, ExternalLink, Heart, Info } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export interface ScholarshipProps {
@@ -43,7 +44,11 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onBookma
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-xl">{scholarship.title}</CardTitle>
+            <CardTitle className="text-xl">
+              <Link to={`/scholarship/${scholarship.id}`} className="hover:text-primary hover:underline">
+                {scholarship.title}
+              </Link>
+            </CardTitle>
             <CardDescription className="mt-1">{scholarship.provider}</CardDescription>
           </div>
           <Button 
@@ -74,9 +79,14 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onBookma
           ))}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="gap-2">
         <Button onClick={handleApply} className="w-full gap-1">
           Apply Now <ExternalLink className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" asChild>
+          <Link to={`/scholarship/${scholarship.id}`}>
+            <Info className="h-4 w-4" />
+          </Link>
         </Button>
       </CardFooter>
     </Card>
