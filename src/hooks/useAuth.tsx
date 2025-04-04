@@ -4,7 +4,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 interface ProfileData {
   // Personal Details
   name: string;
-  dateOfBirth: string | undefined;
+  dateOfBirth: Date | undefined; // Changed from string | undefined to Date | undefined
   gender: string;
   category: string;
   email: string;
@@ -58,6 +58,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
+        
+        // Handle date conversion for dateOfBirth if the profile exists
+        if (userData.profile && userData.profile.dateOfBirth) {
+          userData.profile.dateOfBirth = new Date(userData.profile.dateOfBirth);
+        }
+        
         setUser(userData);
       } catch (error) {
         console.error("Error parsing user data:", error);
