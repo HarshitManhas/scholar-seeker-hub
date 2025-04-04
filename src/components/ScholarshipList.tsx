@@ -9,19 +9,30 @@ import { Search, SlidersHorizontal, X } from 'lucide-react';
 
 interface ScholarshipListProps {
   scholarships: ScholarshipProps[];
+  onBookmark: (id: string) => void;
+  onApply?: (id: string) => void;
+  bookmarkedIds: string[];
 }
 
-const ScholarshipList: React.FC<ScholarshipListProps> = ({ scholarships }) => {
-  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
+const ScholarshipList: React.FC<ScholarshipListProps> = ({ 
+  scholarships, 
+  onBookmark, 
+  onApply,
+  bookmarkedIds = []
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [amountFilter, setAmountFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
   const handleBookmark = (id: string) => {
-    setBookmarkedIds(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+    onBookmark(id);
+  };
+
+  const handleApply = (id: string) => {
+    if (onApply) {
+      onApply(id);
+    }
   };
 
   const filteredScholarships = scholarships.filter(scholarship => {
@@ -91,9 +102,9 @@ const ScholarshipList: React.FC<ScholarshipListProps> = ({ scholarships }) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All amounts</SelectItem>
-                  <SelectItem value="below5k">Below $5,000</SelectItem>
-                  <SelectItem value="5kto10k">$5,000 - $10,000</SelectItem>
-                  <SelectItem value="above10k">Above $10,000</SelectItem>
+                  <SelectItem value="below5k">Below ₹5,000</SelectItem>
+                  <SelectItem value="5kto10k">₹5,000 - ₹10,000</SelectItem>
+                  <SelectItem value="above10k">Above ₹10,000</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -127,6 +138,7 @@ const ScholarshipList: React.FC<ScholarshipListProps> = ({ scholarships }) => {
                       isBookmarked: bookmarkedIds.includes(scholarship.id)
                     }}
                     onBookmark={handleBookmark}
+                    onApply={() => handleApply(scholarship.id)}
                   />
                 ))}
               </div>
@@ -151,6 +163,7 @@ const ScholarshipList: React.FC<ScholarshipListProps> = ({ scholarships }) => {
                       isBookmarked: true
                     }}
                     onBookmark={handleBookmark}
+                    onApply={() => handleApply(scholarship.id)}
                   />
                 ))}
               </div>

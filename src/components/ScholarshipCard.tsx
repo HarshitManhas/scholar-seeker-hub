@@ -21,9 +21,10 @@ export interface ScholarshipProps {
 interface ScholarshipCardProps {
   scholarship: ScholarshipProps;
   onBookmark: (id: string) => void;
+  onApply: () => void;
 }
 
-const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onBookmark }) => {
+const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onBookmark, onApply }) => {
   const handleBookmark = () => {
     onBookmark(scholarship.id);
     if (!scholarship.isBookmarked) {
@@ -32,6 +33,8 @@ const ScholarshipCard: React.FC<ScholarshipCardProps> = ({ scholarship, onBookma
   };
 
   const handleApply = () => {
+    onApply();
+    toast.success("Application initiated for " + scholarship.title);
     window.open(scholarship.url, '_blank');
   };
 
