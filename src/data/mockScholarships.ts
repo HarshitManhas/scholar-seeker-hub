@@ -1,6 +1,7 @@
 
 import { ScholarshipProps } from '../components/ScholarshipCard';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/types/supabase';
 
 export const mockScholarships: ScholarshipProps[] = [
   {
@@ -128,7 +129,7 @@ export const seedScholarships = async () => {
     
     // Insert scholarships into database
     const { error: insertError } = await supabase
-      .from('scholarships')
+      .from<keyof Database['public']['Tables'], any>('scholarships')
       .insert(scholarshipsToInsert);
       
     if (insertError) {

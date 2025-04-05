@@ -8,11 +8,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from '@/hooks/useAuth';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" })
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -24,7 +24,6 @@ interface LoginFormProps {
 
 const LoginForm = ({ onSuccess, onRegisterClick }: LoginFormProps) => {
   const { login } = useAuth();
-  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,34 +33,29 @@ const LoginForm = ({ onSuccess, onRegisterClick }: LoginFormProps) => {
   });
 
   const onSubmit = async (data: FormValues) => {
-    // In a real app, you would call an API to authenticate the user
     try {
-      console.log("Login attempt with:", data);
-      // Simulate successful login (replace with actual API call)
-      setTimeout(() => {
-        // Create user object and login
-        login({ 
-          email: data.email,
-          isLoggedIn: true,
-        });
-        
-        toast.success("Successfully logged in!");
-        
-        if (onSuccess) {
-          onSuccess();
-        }
-      }, 1000);
+      // Provide both email and password to the login function
+      await login(data.email, data.password);
+      
+      toast.success("Login successful!");
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
-      toast.error("Failed to login. Please check your credentials.");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+      }
     }
   };
 
   return (
     <div className="space-y-4 w-full">
       <div className="space-y-2 text-center">
-        <h3 className="text-2xl font-semibold tracking-tight">Login</h3>
+        <h3 className="text-2xl font-semibold tracking-tight">Welcome Back</h3>
         <p className="text-sm text-muted-foreground">
-          Enter your credentials to access your account
+          Enter your credentials to sign in
         </p>
       </div>
       
@@ -79,7 +73,7 @@ const LoginForm = ({ onSuccess, onRegisterClick }: LoginFormProps) => {
                     <Input 
                       placeholder="you@example.com" 
                       className="pl-10" 
-                      {...field}
+                      {...field} 
                     />
                   </div>
                 </FormControl>

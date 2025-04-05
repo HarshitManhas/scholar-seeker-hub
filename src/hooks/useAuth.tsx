@@ -1,264 +1,228 @@
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { Profile } from '@/types/supabase';
 
-interface ProfileData {
-  // Personal Details
-  name: string;
-  dateOfBirth: Date | undefined;
-  gender: string;
-  category: string;
-  email: string;
-  phone: string;
-  
-  // Academic Details
-  educationLevel: string;
-  course: string;
-  board: string;
-  yearOfStudy: string;
-  marks: string;
-  
-  // Financial Details
-  familyIncome: string;
-  parentsOccupation: string;
-  
-  // Location
-  state: string;
-  district: string;
-  pincode: string;
-  
-  // Special Categories
-  isDisabled: boolean;
-  isOrphan: boolean;
-  hasSingleParent: boolean;
-}
-
-interface User {
-  email: string;
-  isLoggedIn: boolean;
-  profile?: ProfileData;
-  id?: string;
-}
-
-interface AuthContextType {
+type AuthContextType = {
   user: User | null;
+  profile: Profile | null;
+  session: Session | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (profileData: ProfileData) => Promise<void>;
-  hasProfile: boolean;
-}
+  updateProfile: (profileData: Partial<Profile>) => Promise<void>;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize the auth state
-  useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user.id, session.user.email || '');
-      }
-      
-      // Set up auth state change listener
-      const { data: { subscription } } = await supabase.auth.onAuthStateChange(async (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          await fetchUserProfile(session.user.id, session.user.email || '');
-        } else {
-          setUser(null);
-        }
-      });
-      
-      return () => {
-        subscription.unsubscribe();
-      };
-    };
-    
-    initAuth();
-  }, []);
-  
-  // Fetch user profile data from database
-  const fetchUserProfile = async (userId: string, email: string) => {
+  // Fetch the user's profile from the database
+  const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-      
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
       }
-      
-      let userData: ProfileData | undefined;
-      
-      if (data) {
-        userData = {
-          name: data.name || '',
-          dateOfBirth: data.date_of_birth ? new Date(data.date_of_birth) : undefined,
-          gender: data.gender || '',
-          category: data.category || '',
-          email: email,
-          phone: data.phone || '',
-          educationLevel: data.education_level || '',
-          course: data.course || '',
-          board: data.board || '',
-          yearOfStudy: data.year_of_study || '',
-          marks: data.marks || '',
-          familyIncome: data.family_income || '',
-          parentsOccupation: data.parents_occupation || '',
-          state: data.state || '',
-          district: data.district || '',
-          pincode: data.pincode || '',
-          isDisabled: data.is_disabled || false,
-          isOrphan: data.is_orphan || false,
-          hasSingleParent: data.has_single_parent || false
-        };
-      }
-      
-      setUser({
-        email,
-        isLoggedIn: true,
-        id: userId,
-        profile: userData
-      });
+
+      return data;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      setUser({
-        email,
-        isLoggedIn: true,
-        id: userId
-      });
+      console.error('Unexpected error fetching profile:', error);
+      return null;
     }
   };
 
+  // Check if the user is logged in when the component mounts
+  useEffect(() => {
+    const getInitialSession = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get session from supabase
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          
+          // Fetch the user's profile
+          const userProfile = await fetchProfile(initialSession.user.id);
+          setProfile(userProfile);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        if (currentSession) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          
+          // Fetch the user's profile when auth state changes
+          if (currentSession.user) {
+            const userProfile = await fetchProfile(currentSession.user.id);
+            setProfile(userProfile);
+          }
+        } else {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Clean up the subscription on unmount
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Handle user login
   const login = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
       });
-      
+
       if (error) {
         throw error;
       }
-      
-      toast.success('Successfully logged in');
+
+      if (data.user) {
+        // Fetch user profile after login
+        const userProfile = await fetchProfile(data.user.id);
+        setProfile(userProfile);
+      }
+
+      return data;
     } catch (error: any) {
-      toast.error(error.message || 'Failed to log in');
+      console.error('Login error:', error);
       throw error;
     }
   };
 
-  const register = async (email: string, password: string) => {
+  // Handle user registration
+  const signUp = async (email: string, password: string, name: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            name
+          }
+        }
       });
-      
+
       if (error) {
         throw error;
       }
-      
-      toast.success('Registration successful! Check your email for confirmation.');
+
+      // Create a profile for the new user
+      if (data.user) {
+        // Profile should be created by our database trigger,
+        // but we can update it with additional info
+        await updateProfile({ name });
+      }
+
+      toast.success('Registration successful! Please check your email to verify your account.');
+      return data;
     } catch (error: any) {
-      toast.error(error.message || 'Failed to register');
+      console.error('Sign up error:', error);
       throw error;
     }
   };
 
+  // Handle user logout
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
+      
       setUser(null);
-      toast.success('Logged out successfully');
+      setSession(null);
+      setProfile(null);
     } catch (error) {
-      console.error('Error logging out:', error);
-      toast.error('Failed to log out');
+      console.error('Logout error:', error);
+      throw error;
     }
   };
 
-  const updateProfile = async (profileData: ProfileData) => {
-    if (!user?.id) {
-      toast.error('User not authenticated');
-      return;
+  // Update the user's profile
+  const updateProfile = async (profileData: Partial<Profile>) => {
+    if (!user) {
+      throw new Error('User must be logged in to update profile');
     }
-    
+
     try {
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          name: profileData.name,
-          date_of_birth: profileData.dateOfBirth,
-          gender: profileData.gender,
-          category: profileData.category,
-          email: profileData.email,
-          phone: profileData.phone,
-          education_level: profileData.educationLevel,
-          course: profileData.course,
-          board: profileData.board,
-          year_of_study: profileData.yearOfStudy,
-          marks: profileData.marks,
-          family_income: profileData.familyIncome,
-          parents_occupation: profileData.parentsOccupation,
-          state: profileData.state,
-          district: profileData.district,
-          pincode: profileData.pincode,
-          is_disabled: profileData.isDisabled,
-          is_orphan: profileData.isOrphan,
-          has_single_parent: profileData.hasSingleParent
-        }, { 
-          onConflict: 'id' 
-        });
-      
+        .update(profileData)
+        .eq('id', user.id);
+
       if (error) {
         throw error;
       }
-      
-      setUser({
-        ...user,
-        profile: profileData
-      });
-      
-    } catch (error) {
+
+      // Refetch the profile to get the updated data
+      const updatedProfile = await fetchProfile(user.id);
+      setProfile(updatedProfile);
+
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      throw error;
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        hasProfile: !!(user?.profile),
-        login,
-        register,
-        logout,
-        updateProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    profile,
+    session,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    signUp,
+    logout,
+    updateProfile,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
   return context;
 };
