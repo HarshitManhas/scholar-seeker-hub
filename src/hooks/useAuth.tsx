@@ -1,8 +1,10 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { Profile } from '@/types/supabase';
-import { ProfileData, convertFormDataToSupabaseProfile } from '@/utils/profileAdapter';
+import { ProfileData, convertFormDataToSupabaseProfile, convertSupabaseProfileToFormData } from '@/utils/profileAdapter';
+import { toast } from '@/components/ui/use-toast';
 
 export interface AuthContextType {
   user: User | null;
@@ -147,10 +149,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
-        await updateProfile({ name });
+        // Create a minimal profile with required fields
+        const initialProfileData: ProfileData = {
+          name,
+          dateOfBirth: undefined,
+          gender: '',
+          category: '',
+          email,
+          phone: '',
+          educationLevel: '',
+          course: '',
+          board: '',
+          yearOfStudy: '',
+          marks: '',
+          familyIncome: '',
+          parentsOccupation: '',
+          state: '',
+          district: '',
+          pincode: '',
+          isDisabled: false,
+          isOrphan: false,
+          hasSingleParent: false
+        };
+        
+        await updateProfile(initialProfileData);
       }
 
-      toast.success('Registration successful! Please check your email to verify your account.');
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to verify your account."
+      });
     } catch (error: any) {
       console.error('Sign up error:', error);
       throw error;
@@ -187,7 +215,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      getProfile(user.id);
+      // Fetch the updated profile
+      const userProfile = await fetchProfile(user.id);
+      setProfile(userProfile);
+      setHasProfile(!!userProfile);
       
     } catch (error) {
       console.error('Error updating profile:', error);
