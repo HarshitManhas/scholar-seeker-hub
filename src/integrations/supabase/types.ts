@@ -9,7 +9,175 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          created_at: string
+          id: string
+          scholarship_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scholarship_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scholarship_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_scholarship_id_fkey"
+            columns: ["scholarship_id"]
+            isOneToOne: false
+            referencedRelation: "scholarships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          scholarship_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scholarship_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scholarship_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_scholarship_id_fkey"
+            columns: ["scholarship_id"]
+            isOneToOne: false
+            referencedRelation: "scholarships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          board: string | null
+          category: string | null
+          course: string | null
+          created_at: string
+          date_of_birth: string | null
+          district: string | null
+          education_level: string | null
+          email: string | null
+          family_income: string | null
+          gender: string | null
+          has_single_parent: boolean | null
+          id: string
+          is_disabled: boolean | null
+          is_orphan: boolean | null
+          marks: string | null
+          name: string | null
+          parents_occupation: string | null
+          phone: string | null
+          pincode: string | null
+          state: string | null
+          year_of_study: string | null
+        }
+        Insert: {
+          board?: string | null
+          category?: string | null
+          course?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          district?: string | null
+          education_level?: string | null
+          email?: string | null
+          family_income?: string | null
+          gender?: string | null
+          has_single_parent?: boolean | null
+          id: string
+          is_disabled?: boolean | null
+          is_orphan?: boolean | null
+          marks?: string | null
+          name?: string | null
+          parents_occupation?: string | null
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          year_of_study?: string | null
+        }
+        Update: {
+          board?: string | null
+          category?: string | null
+          course?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          district?: string | null
+          education_level?: string | null
+          email?: string | null
+          family_income?: string | null
+          gender?: string | null
+          has_single_parent?: boolean | null
+          id?: string
+          is_disabled?: boolean | null
+          is_orphan?: boolean | null
+          marks?: string | null
+          name?: string | null
+          parents_occupation?: string | null
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          year_of_study?: string | null
+        }
+        Relationships: []
+      }
+      scholarships: {
+        Row: {
+          amount: string
+          created_at: string
+          deadline: string
+          description: string
+          eligibility: string[]
+          id: string
+          provider: string
+          title: string
+          url: string
+        }
+        Insert: {
+          amount: string
+          created_at?: string
+          deadline: string
+          description: string
+          eligibility?: string[]
+          id?: string
+          provider: string
+          title: string
+          url: string
+        }
+        Update: {
+          amount?: string
+          created_at?: string
+          deadline?: string
+          description?: string
+          eligibility?: string[]
+          id?: string
+          provider?: string
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,5 +1,6 @@
 
 import { ScholarshipProps } from '../components/ScholarshipCard';
+import { supabase } from '@/integrations/supabase/client';
 
 export const mockScholarships: ScholarshipProps[] = [
   {
@@ -93,3 +94,50 @@ export const mockScholarships: ScholarshipProps[] = [
     url: "https://example.com/scholarship9"
   }
 ];
+
+// Function to seed the database with mock scholarships
+export const seedScholarships = async () => {
+  try {
+    // Check if scholarships already exist in the database
+    const { data: existingScholarships, error: checkError } = await supabase
+      .from('scholarships')
+      .select('id')
+      .limit(1);
+      
+    if (checkError) {
+      console.error('Error checking for existing scholarships:', checkError);
+      return;
+    }
+    
+    // If scholarships already exist, don't add again
+    if (existingScholarships && existingScholarships.length > 0) {
+      console.log('Scholarships already seeded');
+      return;
+    }
+    
+    // Prepare the data for insertion
+    const scholarshipsToInsert = mockScholarships.map(scholarship => ({
+      title: scholarship.title,
+      provider: scholarship.provider,
+      amount: scholarship.amount,
+      deadline: scholarship.deadline,
+      eligibility: scholarship.eligibility,
+      description: scholarship.description,
+      url: scholarship.url
+    }));
+    
+    // Insert scholarships into database
+    const { error: insertError } = await supabase
+      .from('scholarships')
+      .insert(scholarshipsToInsert);
+      
+    if (insertError) {
+      console.error('Error seeding scholarships:', insertError);
+      return;
+    }
+    
+    console.log('Successfully seeded scholarships');
+  } catch (error) {
+    console.error('Unexpected error seeding scholarships:', error);
+  }
+};
