@@ -12,37 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { toast } from 'sonner';
-
-type ProfileData = {
-  // Personal Details
-  name: string;
-  dateOfBirth: Date | undefined;
-  gender: string;
-  category: string;
-  email: string;
-  phone: string;
-  
-  // Academic Details
-  educationLevel: string;
-  course: string;
-  board: string;
-  yearOfStudy: string;
-  marks: string;
-  
-  // Financial Details
-  familyIncome: string;
-  parentsOccupation: string;
-  
-  // Location
-  state: string;
-  district: string;
-  pincode: string;
-  
-  // Special Categories
-  isDisabled: boolean;
-  isOrphan: boolean;
-  hasSingleParent: boolean;
-};
+import { ProfileData } from '@/utils/profileAdapter';
 
 interface ProfileFormProps {
   onSubmit: (data: ProfileData) => void;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import ProfileForm from '@/components/ProfileForm';
@@ -12,6 +13,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import LoginForm from '@/components/LoginForm';
 import RegisterForm from '@/components/RegisterForm';
 import { toast } from 'sonner';
+import { convertSupabaseProfileToFormData } from '@/utils/profileAdapter';
 
 const Index = () => {
   const { isAuthenticated, user, profile, updateProfile, hasProfile } = useAuth();
@@ -302,7 +304,7 @@ const Index = () => {
             
             <ProfileForm 
               onSubmit={handleProfileSubmit} 
-              initialData={profile} 
+              initialData={convertSupabaseProfileToFormData(profile)} 
             />
           </>
         ) : showDashboard ? (
