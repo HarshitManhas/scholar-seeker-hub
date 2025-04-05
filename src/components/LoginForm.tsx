@@ -1,124 +1,110 @@
 
-import React from 'react';
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Mail, Lock } from "lucide-react";
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { useAuth } from '@/hooks/useAuth';
-
-const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" })
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { toast } from 'sonner';
+import { LogIn, Loader2 } from 'lucide-react';
 
 interface LoginFormProps {
-  onSuccess?: () => void;
-  onRegisterClick?: () => void;
+  onSuccess: () => void;
+  onRegisterClick: () => void;
 }
 
 const LoginForm = ({ onSuccess, onRegisterClick }: LoginFormProps) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
 
-  const onSubmit = async (data: FormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Please enter both email and password');
+      return;
+    }
+    
     try {
-      // Provide both email and password to the login function
-      await login(data.email, data.password);
-      
-      toast.success("Login successful!");
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Login failed. Please check your credentials.");
-      }
+      setIsLoading(true);
+      await login(email, password);
+      toast.success('Login successful!');
+      onSuccess();
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Failed to log in. Please check your credentials and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4 w-full">
+    <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h3 className="text-2xl font-semibold tracking-tight">Welcome Back</h3>
-        <p className="text-sm text-muted-foreground">
-          Enter your credentials to sign in
-        </p>
+        <h2 className="text-2xl font-bold">Log in to your account</h2>
+        <p className="text-sm text-muted-foreground">Enter your email and password to continue</p>
       </div>
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="you@example.com" 
-                      className="pl-10" 
-                      {...field} 
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium">Email</label>
+          <Input 
+            id="email"
+            type="email" 
+            placeholder="example@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
+            required
           />
-          
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      className="pl-10" 
-                      {...field} 
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="text-sm font-medium">Password</label>
+            <button 
+              type="button"
+              className="text-xs text-primary hover:underline"
+              onClick={() => toast.info('Reset password functionality is not implemented yet.')}
+            >
+              Forgot password?
+            </button>
+          </div>
+          <Input 
+            id="password"
+            type="password" 
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
+            required
           />
-          
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Logging in..." : "Login"}
-          </Button>
-        </form>
-      </Form>
+        </div>
+        
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Logging in...
+            </>
+          ) : (
+            <>
+              <LogIn className="mr-2 h-4 w-4" />
+              Log in
+            </>
+          )}
+        </Button>
+      </form>
       
       <div className="text-center text-sm">
         <span className="text-muted-foreground">Don't have an account? </span>
-        <Button 
-          variant="link" 
-          className="p-0 h-auto" 
+        <button 
+          type="button"
+          className="font-medium text-primary hover:underline"
           onClick={onRegisterClick}
         >
-          Register
-        </Button>
+          Sign up
+        </button>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ type AuthContextType = {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  hasProfile: boolean;
   login: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -117,8 +118,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userProfile = await fetchProfile(data.user.id);
         setProfile(userProfile);
       }
-
-      return data;
     } catch (error: any) {
       console.error('Login error:', error);
       throw error;
@@ -150,7 +149,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       toast.success('Registration successful! Please check your email to verify your account.');
-      return data;
     } catch (error: any) {
       console.error('Sign up error:', error);
       throw error;
@@ -208,6 +206,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     isAuthenticated: !!user,
     isLoading,
+    hasProfile: !!profile,
     login,
     signUp,
     logout,

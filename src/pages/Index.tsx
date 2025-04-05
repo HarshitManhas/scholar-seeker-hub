@@ -14,7 +14,7 @@ import RegisterForm from '@/components/RegisterForm';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const { isAuthenticated, user, updateProfile, hasProfile } = useAuth();
+  const { isAuthenticated, user, profile, updateProfile, hasProfile } = useAuth();
   const [showResults, setShowResults] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [filteredScholarships, setFilteredScholarships] = useState<ScholarshipProps[]>([]);
@@ -25,8 +25,8 @@ const Index = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (hasProfile && user.profile) {
-        handleProfileSubmit(user.profile);
+      if (hasProfile && profile) {
+        handleProfileSubmit(profile);
       }
       
       const savedBookmarks = localStorage.getItem(`bookmarks_${user.email}`);
@@ -48,7 +48,7 @@ const Index = () => {
         }
       }
     }
-  }, [isAuthenticated, user, hasProfile]);
+  }, [isAuthenticated, user, hasProfile, profile]);
 
   const handleProfileSubmit = (profileData: any) => {
     console.log("Profile data submitted:", profileData);
@@ -302,7 +302,7 @@ const Index = () => {
             
             <ProfileForm 
               onSubmit={handleProfileSubmit} 
-              initialData={user?.profile} 
+              initialData={profile} 
             />
           </>
         ) : showDashboard ? (
