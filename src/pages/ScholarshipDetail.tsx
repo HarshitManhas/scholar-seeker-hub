@@ -79,11 +79,15 @@ const ScholarshipDetail = () => {
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/">Home</BreadcrumbLink>
+            <Link to="/" className="transition-colors hover:text-foreground">
+              Home
+            </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/">Scholarships</BreadcrumbLink>
+            <Link to="/" className="transition-colors hover:text-foreground">
+              Scholarships
+            </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -220,3 +224,4 @@ const ScholarshipDetail = () => {
 };
 
 export default ScholarshipDetail;
+
