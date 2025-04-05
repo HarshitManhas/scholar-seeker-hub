@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -118,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error("Login error details:", error);
         throw error;
       }
 
@@ -149,7 +149,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
-        // Create a minimal profile with required fields
         const initialProfileData: ProfileData = {
           name,
           dateOfBirth: undefined,
@@ -178,6 +177,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({
         title: "Registration successful!",
         description: "Please check your email to verify your account."
+      });
+      
+      toast({
+        title: "Important",
+        description: "You may need to confirm your email before logging in, or disable email confirmation in Supabase dashboard.",
+        duration: 8000
       });
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -215,7 +220,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      // Fetch the updated profile
       const userProfile = await fetchProfile(user.id);
       setProfile(userProfile);
       setHasProfile(!!userProfile);

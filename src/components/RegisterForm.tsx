@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, User, Phone } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -28,6 +29,7 @@ interface RegisterFormProps {
 }
 
 const RegisterForm = ({ onSuccess, onLoginClick }: RegisterFormProps) => {
+  const { signUp } = useAuth();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,18 +42,16 @@ const RegisterForm = ({ onSuccess, onLoginClick }: RegisterFormProps) => {
   });
 
   const onSubmit = async (data: FormValues) => {
-    // In a real app, you would call an API to register the user
     try {
       console.log("Registration data:", data);
-      // Simulate successful registration (replace with actual API call)
-      setTimeout(() => {
-        toast.success("Registration successful! You can now log in.");
-        if (onSuccess) {
-          onSuccess();
-        }
-      }, 1000);
-    } catch (error) {
-      toast.error("Registration failed. Please try again.");
+      await signUp(data.email, data.password, data.name);
+      // The toast is now handled inside the signUp function
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast.error(error.message || "Registration failed. Please try again.");
     }
   };
 
